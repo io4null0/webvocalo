@@ -1,11 +1,52 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-  <title>MIDI Piano Roll</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web版ボーカロイド</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            margin: 10px 0;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+    </style>
 </head>
 <body>
-  <canvas id="pianoRoll"></canvas>
-  <script src="https://cdn.jsdelivr.net/npm/tone@14.7.76/build/Tone.min.js"></script>
-  <script src="script.js"></script>
+    <h1>Web版ボーカロイド</h1>
+    <textarea id="lyrics" placeholder="歌詞を入力してください"></textarea><br>
+    <button onclick="speak()">歌う</button>
+
+    <script>
+        function speak() {
+            const lyrics = document.getElementById("lyrics").value;
+
+            if (!lyrics) {
+                alert("歌詞を入力してください");
+                return;
+            }
+
+            // Web Speech API の音声合成オブジェクトを作成
+            const synth = window.speechSynthesis;
+            const utterance = new SpeechSynthesisUtterance(lyrics);
+
+            // 音声の設定（声のタイプ、速度、ピッチなどを変更可能）
+            utterance.voice = synth.getVoices()[0]; // 声の種類を選択
+            utterance.pitch = 1; // ピッチ（0〜2）
+            utterance.rate = 1; // 話す速さ（0.1〜10）
+
+            // 音声を再生
+            synth.speak(utterance);
+        }
+    </script>
 </body>
 </html>
