@@ -1,55 +1,11 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web VOCALOID</title>
-    <style>
-        .piano-roll {
-            display: grid;
-            grid-template-columns: repeat(8, 60px);
-            grid-template-rows: repeat(12, 40px);
-            gap: 2px;
-        }
-        .note {
-            width: 60px;
-            height: 40px;
-            background-color: lightgray;
-            border: 1px solid #000;
-            cursor: pointer;
-        }
-        .active {
-            background-color: orange;
-        }
-    </style>
+  <title>MIDI Piano Roll</title>
 </head>
 <body>
-    <h1>Web VOCALOID風</h1>
-    <div class="piano-roll" id="pianoRoll"></div>
-    <button onclick="play()">再生</button>
-
-    <script>
-        // ピアノロールの生成
-        const pianoRoll = document.getElementById('pianoRoll');
-        const notes = [];
-
-        for (let i = 0; i < 96; i++) {
-            const noteDiv = document.createElement('div');
-            noteDiv.classList.add('note');
-            noteDiv.addEventListener('click', () => {
-                noteDiv.classList.toggle('active');
-            });
-            pianoRoll.appendChild(noteDiv);
-            notes.push(noteDiv);
-        }
-
-        // テキストを音声に変換する
-        function play() {
-            const utterance = new SpeechSynthesisUtterance("あなたが入力した歌詞");
-            utterance.pitch = 1; // ピッチ調整
-            utterance.rate = 1; // 速度調整
-            speechSynthesis.speak(utterance);
-        }
-    </script>
+  <canvas id="pianoRoll"></canvas>
+  <script src="https://cdn.jsdelivr.net/npm/tone@14.7.76/build/Tone.min.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
