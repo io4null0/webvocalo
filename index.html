@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web版ボーカロイド</title>
+    <title>UTAU音源を使ったWeb版ボーカロイド</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -11,41 +11,136 @@
             padding: 50px;
         }
         textarea {
-            width: 100%;
-            height: 150px;
-            margin: 10px 0;
+            width: 400px;
+            height: 100px;
         }
         button {
             padding: 10px 20px;
             font-size: 16px;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
-    <h1>Web版ボーカロイド</h1>
+    <h1>UTAU音源を使ったWeb版ボーカロイド</h1>
     <textarea id="lyrics" placeholder="歌詞を入力してください"></textarea><br>
-    <button onclick="speak()">歌う</button>
+    <button onclick="startSinging()">歌う</button>
 
     <script>
-        function speak() {
-            const lyrics = document.getElementById("lyrics").value;
+        let otoEntries = {};
 
+        // oto.iniを解析する関数
+        function parseOtoIni(data) {
+            const lines = data.split('\n');
+            lines.forEach(line => {
+                if (line.trim() === '' || line.startsWith('#')) return;  // 空行やコメントを無視
+
+                const [file, params] = line.split('=');
+                const [alias, offset, consonant, cutoff, preutterance, overlap] = params.split(',');
+
+                otoEntries[file.trim()] = {
+                    alias: alias.trim(),
+                    offset: parseFloat(offset),
+                    consonant: parseFloat(consonant),
+                    cutoff: parseFloat(cutoff),
+                    preutterance: parseFloat(preutterance),
+                    overlap: parseFloat(overlap)
+                };
+            });
+        }
+
+        // oto.iniファイルを読み込む（サーバー上に配置）
+        fetch('path/to/oto.ini') // oto.iniへのパス
+            .then(response => response.text())
+            .then(data => {
+                parseOtoIni(data);
+            });
+
+        // 音符に対応する音声を再生する関数
+        function playUtauSound(file, otoData, note, delay) {
+            const audio = new Audio(file);
+
+            // 再生開始タイミングを調整（oto.iniのオフセットを考慮）
+            const startTime = otoData.offset / 1000;  // ミリ秒を秒に変換
+            const duration = (otoData.consonant - otoData.cutoff) / 1000;  // 再生する長さを計算
+
+            // Web Audio APIを使用してピッチを調整
+            const context = new (window.AudioContext || window.webkitAudioContext)();
+            const source = context.createMediaElementSource(audio);
+
+            const gainNode = context.createGain(); // 音量調整用
+            const playbackRate = getPlaybackRateForNote(note); // 音符に応じた再生速度を取得
+
+            source.connect(gainNode);
+            gainNode.connect(context.destination);
+
+            // 再生速度の設定（ピッチシフト）
+            audio.playbackRate = playbackRate;
+
+            // 遅延後に音声を再生
+            setTimeout(() => {
+                audio.currentTime = startTime; // 再生開始位置を設定
+                audio.play();
+            }, delay);
+
+            // 再生後に自動で停止
+            setTimeout(() => {
+                audio.pause();
+            }, delay + duration * 1000);  // durationに従って再生を停止
+        }
+
+        // 音符ごとの再生速度を計算する関数（ピッチシフト用）
+        function getPlaybackRateForNote(note) {
+            const basePitch = 440;  // A4の基準周波数
+            const noteFrequencies = {
+                "C4": 261.63,
+                "D4": 293.66,
+                "E4": 329.63,
+                "F4": 349.23,
+                "G4": 392.00,
+                "A4": 440.00,
+                "B4": 493.88
+                // 他の音符も追加可能
+            };
+
+            return noteFrequencies[note] / basePitch;  // 基準周波数に対する比率で再生速度を決定
+        }
+
+        // 歌詞に基づいた音符と母音を割り当てる（簡易版）
+        function getPhonemes(lyrics) {
+            const phonemes = [];
+            for (let i = 0; i < lyrics.length; i++) {
+                const char = lyrics[i];
+                let note = "C4";  // デフォルトの音階（簡易版）
+                let vowel = 'あ';  // 簡単な例として「あ」に固定（実際は歌詞の解析が必要）
+
+                // 音符と母音の割り当て（実際には歌詞解析ロジックを追加）
+                phonemes.push({ vowel, note });
+            }
+            return phonemes;
+        }
+
+        // 歌の再生を開始する関数
+        function startSinging() {
+            const lyrics = document.getElementById('lyrics').value;
             if (!lyrics) {
-                alert("歌詞を入力してください");
+                alert('歌詞を入力してください');
                 return;
             }
 
-            // Web Speech API の音声合成オブジェクトを作成
-            const synth = window.speechSynthesis;
-            const utterance = new SpeechSynthesisUtterance(lyrics);
+            const phonemes = getPhonemes(lyrics);
+            let delay = 0;
 
-            // 音声の設定（声のタイプ、速度、ピッチなどを変更可能）
-            utterance.voice = synth.getVoices()[0]; // 声の種類を選択
-            utterance.pitch = 1; // ピッチ（0〜2）
-            utterance.rate = 1; // 話す速さ（0.1〜10）
+            phonemes.forEach((phoneme, index) => {
+                // oto.iniから対応する音声ファイルを取得
+                const file = `sounds/${phoneme.vowel}-${phoneme.note}.wav`;
+                const otoData = otoEntries[`${phoneme.vowel}-${phoneme.note}.wav`];
 
-            // 音声を再生
-            synth.speak(utterance);
+                if (otoData) {
+                    playUtauSound(file, otoData, phoneme.note, delay);
+                    delay += 500;  // 各音符の再生間隔を0.5秒とする（調整可能）
+                }
+            });
         }
     </script>
 </body>
