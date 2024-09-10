@@ -50,7 +50,7 @@
         }
 
         // oto.iniファイルを読み込む（サーバー上に配置）
-        fetch('path/to/oto.ini') // oto.iniへのパス
+        fetch('oto.ini') // oto.iniへのパス
             .then(response => response.text())
             .then(data => {
                 parseOtoIni(data);
