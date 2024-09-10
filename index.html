@@ -3,92 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Piano Roll</title>
+    <title>Web VOCALOID</title>
     <style>
-        .piano {
-            display: flex;
-            justify-content: center;
+        .piano-roll {
+            display: grid;
+            grid-template-columns: repeat(8, 60px);
+            grid-template-rows: repeat(12, 40px);
+            gap: 2px;
         }
-
-        .key {
-            width: 40px;
-            height: 200px;
+        .note {
+            width: 60px;
+            height: 40px;
+            background-color: lightgray;
             border: 1px solid #000;
-            margin: 1px;
             cursor: pointer;
-            display: inline-block;
-            position: relative;
         }
-
-        .white {
-            background-color: white;
-        }
-
-        .black {
-            background-color: black;
-            height: 120px;
-            width: 30px;
-            margin-left: -15px;
-            margin-right: -15px;
-            z-index: 1;
-            position: absolute;
-        }
-
-        .black:hover, .white:hover {
-            background-color: #ccc;
+        .active {
+            background-color: orange;
         }
     </style>
 </head>
 <body>
-    <h1>ピアノロール</h1>
-    <div class="piano">
-        <div class="key white" data-note="C"></div>
-        <div class="key black" data-note="C#"></div>
-        <div class="key white" data-note="D"></div>
-        <div class="key black" data-note="D#"></div>
-        <div class="key white" data-note="E"></div>
-        <div class="key white" data-note="F"></div>
-        <div class="key black" data-note="F#"></div>
-        <div class="key white" data-note="G"></div>
-        <div class="key black" data-note="G#"></div>
-        <div class="key white" data-note="A"></div>
-        <div class="key black" data-note="A#"></div>
-        <div class="key white" data-note="B"></div>
-        <div class="key white" data-note="C"></div>
-    </div>
+    <h1>Web VOCALOID風</h1>
+    <div class="piano-roll" id="pianoRoll"></div>
+    <button onclick="play()">再生</button>
 
     <script>
-        const keys = document.querySelectorAll('.key');
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        // ピアノロールの生成
+        const pianoRoll = document.getElementById('pianoRoll');
+        const notes = [];
 
-        function playTone(note) {
-            const oscillator = audioContext.createOscillator();
-            const noteFrequencies = {
-                'C': 261.63,
-                'C#': 277.18,
-                'D': 293.66,
-                'D#': 311.13,
-                'E': 329.63,
-                'F': 349.23,
-                'F#': 369.99,
-                'G': 392.00,
-                'G#': 415.30,
-                'A': 440.00,
-                'A#': 466.16,
-                'B': 493.88
-            };
-            oscillator.frequency.setValueAtTime(noteFrequencies[note], audioContext.currentTime);
-            oscillator.connect(audioContext.destination);
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.5);
+        for (let i = 0; i < 96; i++) {
+            const noteDiv = document.createElement('div');
+            noteDiv.classList.add('note');
+            noteDiv.addEventListener('click', () => {
+                noteDiv.classList.toggle('active');
+            });
+            pianoRoll.appendChild(noteDiv);
+            notes.push(noteDiv);
         }
 
-        keys.forEach(key => {
-            key.addEventListener('click', () => {
-                const note = key.getAttribute('data-note');
-                playTone(note);
-            });
-        });
+        // テキストを音声に変換する
+        function play() {
+            const utterance = new SpeechSynthesisUtterance("あなたが入力した歌詞");
+            utterance.pitch = 1; // ピッチ調整
+            utterance.rate = 1; // 速度調整
+            speechSynthesis.speak(utterance);
+        }
     </script>
 </body>
 </html>
